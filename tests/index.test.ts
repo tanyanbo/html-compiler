@@ -113,6 +113,33 @@ describe("html compiler", () => {
     ])
   })
 
+  it("should add comment node when there is a comment", () => {
+    const html = `
+      <div>
+        <!--<p>aaa</p>-->
+      </div>
+    `
+    const res = compileHtml(html)
+    console.log(res)
+    expect(res).toEqual([
+      new MyNode("div", [new MyNode("comment", ["<p>aaa</p>"])]),
+    ])
+  })
+
+  it("should add comment node when there is a comment after some text", () => {
+    const html = `
+      <div>
+        bbb
+        <!--<p>aaa</p>-->
+      </div>
+    `
+    const res = compileHtml(html)
+    console.log(res)
+    expect(res).toEqual([
+      new MyNode("div", ["bbb", new MyNode("comment", ["<p>aaa</p>"])]),
+    ])
+  })
+
   it("should throw when closing tag does not match opening tag", () => {
     const html = `
       <div>

@@ -63,10 +63,41 @@ export function compileHtml(html: string) {
     curText = ""
   }
 
+  function parseComment(startIdx: number): {
+    isComment: boolean
+    endIdx: number | null
+  } {
+    let slice = html.slice(startIdx)
+
+    if (slice.startsWith("<!--")) {
+      const endIdx = slice.indexOf("-->") + startIdx
+
+      if (endIdx >= 0) {
+        stack[stack.length - 1].children.push(
+          new MyNode("comment", [html.slice(startIdx + 4, endIdx)])
+        )
+        return {
+          isComment: true,
+          endIdx: endIdx + 2,
+        }
+      }
+    }
+
+    return {
+      isComment: false,
+      endIdx: null,
+    }
+  }
+
   for (let i = 0, len = html.length; i < len; i++) {
     switch (currentState) {
       case State.START:
         if (html[i] === "<") {
+          const isCommentRes = parseComment(i)
+          if (isCommentRes.isComment) {
+            i = isCommentRes.endIdx!
+            continue
+          }
           currentState = State.OPEN_TAG
         } else if (/[\n ]/.test(html[i])) {
           continue
@@ -94,8 +125,20 @@ export function compileHtml(html: string) {
         break
       case State.TEXT:
         if (html[i] === "<") {
+          const isCommentRes = parseComment(i)
+          if (isCommentRes.isComment) {
+            i = isCommentRes.endIdx!
+            stack[stack.length - 1].children.splice(
+              stack.length - 1,
+              0,
+              curText.trim()
+            )
+            curText = ""
+            continue
+          }
           currentState = State.OPEN_TAG
-          stack[stack.length - 1].children.push(curText.trim())
+          curText.trim() &&
+            stack[stack.length - 1].children.push(curText.trim())
           curText = ""
         } else {
           curText += html[i]
