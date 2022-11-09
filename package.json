@@ -1,0 +1,12 @@
+{
+  "name": "vue-compiler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.9"
+  }
+}

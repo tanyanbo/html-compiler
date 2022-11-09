@@ -1,11 +1,14 @@
-const html = `<div>
+const html = `
+<div>
   <p>
     testing
     <p>aaa</p>
     <span>testing</span>
   </p>
-  <p>            cessssshi</p>
-</div>`
+  <p style="backgroundColor: red">            cessssshi</p>
+</div>
+<header class='heading' id='main-title'>this is the title</header>
+`
 // const html = "<p>testing</p>"
 
 enum State {
@@ -13,15 +16,22 @@ enum State {
   OPEN_TAG,
   CLOSE_TAG,
   TEXT,
+  PROPS,
 }
 
 class MyNode {
   tagName: string
   children: (MyNode | string)[]
+  props: Record<string, string>
 
-  constructor(tagName: string, children: (MyNode | string)[] = []) {
+  constructor(
+    tagName: string,
+    children: (MyNode | string)[] = [],
+    props: Record<string, string> = {}
+  ) {
     this.tagName = tagName
     this.children = children
+    this.props = props
   }
 
   print(indent = 0) {
@@ -41,6 +51,17 @@ function compileHtml(html: string) {
   let stack: MyNode[] = []
   let res: MyNode[] = []
   let curText: string = ""
+  let curProps: Record<string, string> = {}
+
+  function addNodeToStack() {
+    currentState = State.START
+    const node = new MyNode(curText)
+    if (stack.length === 0) {
+      res.push(node)
+    }
+    stack.push(node)
+    curText = ""
+  }
 
   for (let i = 0, len = html.length; i < len; i++) {
     switch (currentState) {
@@ -56,15 +77,17 @@ function compileHtml(html: string) {
         break
       case State.OPEN_TAG:
         if (html[i] === ">") {
-          currentState = State.START
-          const node = new MyNode(curText)
+          addNodeToStack()
+        } else if (html[i] === "/") {
+          currentState = State.CLOSE_TAG
+        } else if (html[i] === " ") {
+          currentState = State.PROPS
+          const node = new MyNode(curText, [], curProps)
           if (stack.length === 0) {
             res.push(node)
           }
           stack.push(node)
           curText = ""
-        } else if (html[i] === "/") {
-          currentState = State.CLOSE_TAG
         } else {
           curText += html[i]
         }
@@ -74,6 +97,24 @@ function compileHtml(html: string) {
           currentState = State.OPEN_TAG
           stack[stack.length - 1].children.push(curText.trim())
           curText = ""
+        } else {
+          curText += html[i]
+        }
+        break
+      case State.PROPS:
+        if (html[i] === "=") {
+          const quote = html[i + 1]
+          for (let idx = i + 2; idx < len; idx++) {
+            if (html[idx] === quote && html[idx - 1] !== "\\") {
+              curProps[curText.trim()] = html.slice(i + 2, idx)
+              i = idx
+              curText = ""
+              break
+            }
+          }
+        } else if (html[i] === ">") {
+          currentState = State.START
+          curProps = {}
         } else {
           curText += html[i]
         }
@@ -98,4 +139,5 @@ function compileHtml(html: string) {
   return res
 }
 
-compileHtml(html).forEach((root) => root.print())
+console.log(JSON.stringify(compileHtml(html)))
+// compileHtml(html).forEach((root) => root.print())
