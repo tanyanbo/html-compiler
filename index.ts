@@ -3,9 +3,9 @@ const html = `
   <p>
     testing
     <p>aaa</p>
-    <span>testing</span>
+    <button id='test-button' disabled>testing</button>
   </p>
-  <p style="backgroundColor: red">            cessssshi</p>
+  <p style="background-color: red">            cessssshi</p>
 </div>
 <header class='heading' id='main-title'>this is the title</header>
 `
@@ -112,7 +112,16 @@ function compileHtml(html: string) {
               break
             }
           }
+        } else if (html[i] === " ") {
+          if (curText.trim()) {
+            curProps[curText.trim()] = "true"
+            curText = ""
+          }
         } else if (html[i] === ">") {
+          if (curText !== "") {
+            curProps[curText] = "true"
+            curText = ""
+          }
           currentState = State.START
           curProps = {}
         } else {
