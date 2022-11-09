@@ -1,4 +1,11 @@
-const html = `<div><p>testing</p><p>ceshi</p></div>`
+const html = `<div>
+  <p>
+    testing
+    <p>aaa</p>
+    <span>testing</span>
+  </p>
+  <p>            cessssshi</p>
+</div>`
 // const html = "<p>testing</p>"
 
 enum State {
@@ -40,6 +47,8 @@ function compileHtml(html: string) {
       case State.START:
         if (html[i] === "<") {
           currentState = State.OPEN_TAG
+        } else if (/[\n ]/.test(html[i])) {
+          continue
         } else {
           currentState = State.TEXT
           curText += html[i]
@@ -63,7 +72,7 @@ function compileHtml(html: string) {
       case State.TEXT:
         if (html[i] === "<") {
           currentState = State.OPEN_TAG
-          stack[stack.length - 1].children.push(curText)
+          stack[stack.length - 1].children.push(curText.trim())
           curText = ""
         } else {
           curText += html[i]
@@ -83,12 +92,10 @@ function compileHtml(html: string) {
         } else {
           curText += html[i]
         }
-        break
     }
   }
 
   return res
 }
 
-const res = compileHtml(html)
-res.forEach((root) => root.print())
+compileHtml(html).forEach((root) => root.print())
