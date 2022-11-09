@@ -19,7 +19,7 @@ enum State {
   PROPS,
 }
 
-class MyNode {
+export class MyNode {
   tagName: string
   children: (MyNode | string)[]
   props: Record<string, string>
@@ -46,7 +46,7 @@ class MyNode {
   }
 }
 
-function compileHtml(html: string) {
+export function compileHtml(html: string) {
   let currentState: State = State.START
   let stack: MyNode[] = []
   let res: MyNode[] = []
@@ -131,7 +131,7 @@ function compileHtml(html: string) {
       case State.CLOSE_TAG:
         if (html[i] === ">") {
           if (curText !== stack[stack.length - 1].tagName) {
-            throw "Closing tag does not match opening tag"
+            throw new Error("Closing tag does not match opening tag")
           }
           currentState = State.START
           curText = ""
