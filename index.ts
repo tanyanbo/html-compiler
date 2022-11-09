@@ -19,6 +19,23 @@ enum State {
   PROPS,
 }
 
+const VOID_TAGS = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+])
+
 export class MyNode {
   tagName: string
   children: (MyNode | string)[]
@@ -52,16 +69,6 @@ export function compileHtml(html: string) {
   let res: MyNode[] = []
   let curText: string = ""
   let curProps: Record<string, string> = {}
-
-  function addNodeToStack() {
-    currentState = State.START
-    const node = new MyNode(curText)
-    if (stack.length === 0) {
-      res.push(node)
-    }
-    stack.push(node)
-    curText = ""
-  }
 
   function parseComment(startIdx: number): {
     isComment: boolean
@@ -108,9 +115,41 @@ export function compileHtml(html: string) {
         break
       case State.OPEN_TAG:
         if (html[i] === ">") {
-          addNodeToStack()
+          if (VOID_TAGS.has(curText.trim())) {
+            currentState = State.START
+            const node = new MyNode(curText.trim())
+            curText = ""
+            if (stack.length) {
+              // current node is not a root element
+              stack[stack.length - 1].children.push(node)
+            } else {
+              // current node is a root element
+              res.push(node)
+            }
+          } else {
+            currentState = State.START
+            const node = new MyNode(curText.trim())
+            if (stack.length === 0) {
+              res.push(node)
+            }
+            stack.push(node)
+          }
+          curText = ""
         } else if (html[i] === "/") {
-          currentState = State.CLOSE_TAG
+          if (html[i - 1] === "<") {
+            currentState = State.CLOSE_TAG
+          } else {
+            // self-closing tag
+            currentState = State.START
+            const node = new MyNode(curText)
+            curText = ""
+            if (stack.length === 0) {
+              res.push(node)
+            } else {
+              stack[stack.length - 1].children.push(node)
+            }
+            i++
+          }
         } else if (html[i] === " ") {
           currentState = State.PROPS
           const node = new MyNode(curText, [], curProps)
@@ -160,8 +199,28 @@ export function compileHtml(html: string) {
             curProps[curText.trim()] = "true"
             curText = ""
           }
+        } else if (html[i] === "/" && html[i + 1] === ">") {
+          if (curText.trim() === "") {
+            currentState = State.START
+            curText = ""
+            if (stack.length > 1) {
+              stack[stack.length - 2].children.push(stack[stack.length - 1])
+            }
+            stack.pop()
+            i++
+          }
         } else if (html[i] === ">") {
-          if (curText !== "") {
+          if (VOID_TAGS.has(stack[stack.length - 1].tagName)) {
+            currentState = State.START
+            curText = ""
+            curProps = {}
+            if (stack.length > 1) {
+              stack[stack.length - 2].children.push(stack[stack.length - 1])
+            }
+            stack.pop()
+            continue
+          }
+          if (curText !== "" && curText !== "/") {
             curProps[curText] = "true"
             curText = ""
           }
@@ -173,7 +232,12 @@ export function compileHtml(html: string) {
         break
       case State.CLOSE_TAG:
         if (html[i] === ">") {
-          if (curText !== stack[stack.length - 1].tagName) {
+          if (VOID_TAGS.has(curText.trim())) {
+            currentState = State.START
+            curText = ""
+            continue
+          }
+          if (curText.trim() !== stack[stack.length - 1].tagName) {
             throw new Error("Closing tag does not match opening tag")
           }
           currentState = State.START
@@ -191,5 +255,4 @@ export function compileHtml(html: string) {
   return res
 }
 
-console.log(JSON.stringify(compileHtml(html)))
 // compileHtml(html).forEach((root) => root.print())
