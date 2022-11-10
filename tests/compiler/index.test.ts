@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { compileHtml, MyNode } from ".."
+import { compileHtml, MyNode } from "../../src/compiler"
 
 describe("html compiler", () => {
   it("compilation result should be an array", () => {

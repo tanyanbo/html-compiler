@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, MockInstance, vi } from "vitest"
-import { MyNode } from ".."
+import { MyNode } from "../../src/compiler"
 
 describe("node print function", () => {
   let spy: MockInstance
