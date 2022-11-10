@@ -25,10 +25,10 @@ const VOID_TAGS = new Set([
   "wbr",
 ])
 
-export function compileHtml(html: string) {
+export function compileHtml(html: string): MyNode {
   let currentState: State = State.START
   let stack: MyNode[] = []
-  let res: MyNode[] = []
+  let res: MyNode = new MyNode("root")
   let curText: string = ""
   let curProps: Record<string, string> = {}
 
@@ -86,13 +86,13 @@ export function compileHtml(html: string) {
               stack[stack.length - 1].children.push(node)
             } else {
               // current node is a root element
-              res.push(node)
+              res.children.push(node)
             }
           } else {
             currentState = State.START
             const node = new MyNode(curText.trim())
             if (stack.length === 0) {
-              res.push(node)
+              res.children.push(node)
             }
             stack.push(node)
           }
@@ -106,7 +106,7 @@ export function compileHtml(html: string) {
             const node = new MyNode(curText)
             curText = ""
             if (stack.length === 0) {
-              res.push(node)
+              res.children.push(node)
             } else {
               stack[stack.length - 1].children.push(node)
             }
@@ -116,7 +116,7 @@ export function compileHtml(html: string) {
           currentState = State.PROPS
           const node = new MyNode(curText, [], curProps)
           if (stack.length === 0) {
-            res.push(node)
+            res.children.push(node)
           }
           stack.push(node)
           curText = ""
