@@ -1,10 +1,7 @@
 {
-  "name": "vue-compiler",
+  "name": "minivue",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "start": "nodemon index.ts",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "dev": "vite"
