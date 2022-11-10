@@ -1,5 +1,5 @@
 import { compileHtml } from "./compiler"
-import { mount } from "./renderer"
+import { patch, render } from "./renderer"
 
 const html = `
   <div id="parent-container">
@@ -10,4 +10,13 @@ const html = `
 
 const vdom = compileHtml(html)
 
-mount(vdom, document.getElementById("app")!)
+render(vdom, document.getElementById("app")!)
+
+const secondHtml = `
+  <div id="parent-container">
+    <p id='first' style="color: green">10</p>
+    <p class="second" style="color: green">20</p>
+  </div>
+`
+const vdom2 = compileHtml(secondHtml)
+patch(vdom, vdom2, document.getElementById("#app")!)

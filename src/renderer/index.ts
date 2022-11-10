@@ -1,6 +1,22 @@
-import { MyNode } from "../compiler"
+import { MyNode } from "../common/my-node"
 
-export function mount(vdom: MyNode[], container: HTMLElement) {
+export function render(vdom: MyNode[], container: HTMLElement) {
+  patch(null, vdom, container)
+}
+
+export function patch(
+  n1: MyNode[] | null,
+  n2: MyNode[],
+  container: HTMLElement
+) {
+  if (!n1) {
+    mount(n2, container)
+    return
+  } else {
+  }
+}
+
+function mount(vdom: MyNode[], container: HTMLElement) {
   vdom.forEach((vnode) => {
     const el = document.createElement(vnode.tagName)
 

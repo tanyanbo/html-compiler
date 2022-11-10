@@ -1,3 +1,5 @@
+import { MyNode } from "../common/my-node"
+
 enum State {
   START,
   OPEN_TAG,
@@ -22,33 +24,6 @@ const VOID_TAGS = new Set([
   "track",
   "wbr",
 ])
-
-export class MyNode {
-  tagName: string
-  children: (MyNode | string)[]
-  props: Record<string, string>
-
-  constructor(
-    tagName: string,
-    children: (MyNode | string)[] = [],
-    props: Record<string, string> = {}
-  ) {
-    this.tagName = tagName
-    this.children = children
-    this.props = props
-  }
-
-  print(indent = 0) {
-    console.log(`${" ".repeat(indent)}${this.tagName}`)
-    this.children.forEach((child) => {
-      if (typeof child === "string") {
-        console.log(`${" ".repeat(indent + 2)}${child}`)
-      } else {
-        child.print(indent + 2)
-      }
-    })
-  }
-}
 
 export function compileHtml(html: string) {
   let currentState: State = State.START
