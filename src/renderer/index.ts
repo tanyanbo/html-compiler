@@ -7,37 +7,77 @@ export function render(vdom: MyNode, container: HTMLElement) {
 export function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
   if (vNodeOld.tagName === vNodeNew.tagName) {
     // patch
-    const el = (vNodeNew.el = vNodeOld.el)
+    const el = (vNodeNew.el = vNodeOld.el!)
 
     // patch props
-    patchProps(vNodeOld, vNodeNew, el!)
+    patchProps(vNodeOld, vNodeNew, el)
 
     // patch children
-    const commonLength = Math.min(
-      vNodeNew.children.length,
-      vNodeOld.children.length
-    )
-
-    for (let i = 0; i < commonLength; i++) {
-      if (typeof vNodeNew.children[i] === "string") {
-        if (typeof vNodeOld.children[i] === "string") {
-          // new: string, old: string
-          el!.textContent = vNodeNew.children[i] as string
-        } else {
-          // new: string, old: node
-        }
-      } else {
-        if (typeof vNodeOld.children[i] === "string") {
-          // new: node, old: string
-        } else {
-          // new: node, old: node
-          patch(vNodeOld.children[i] as MyNode, vNodeNew.children[i] as MyNode)
-        }
-      }
-    }
+    patchChildren(vNodeOld, vNodeNew, el)
   } else {
     // replace
     replaceNode(vNodeOld, vNodeNew)
+  }
+}
+
+function patchProps(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
+  const oldProps = vNodeOld.props
+  const newProps = vNodeNew.props
+
+  for (const key in newProps) {
+    const value = newProps[key]
+    if (value !== oldProps[key]) {
+      el?.setAttribute(key, value)
+    }
+  }
+
+  for (const key in oldProps) {
+    if (!(key in newProps)) {
+      el?.removeAttribute(key)
+    }
+  }
+}
+
+function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
+  const commonLength = Math.min(
+    vNodeNew.children.length,
+    vNodeOld.children.length
+  )
+
+  for (let i = 0; i < commonLength; i++) {
+    if (typeof vNodeNew.children[i] === "string") {
+      if (typeof vNodeOld.children[i] === "string") {
+        // new: string, old: string
+        vNodeOld.children[i] !== vNodeNew.children[i] &&
+          (el.textContent = vNodeNew.children[i] as string)
+      } else {
+        // new: string, old: node
+        el.textContent = vNodeNew.children[i] as string
+      }
+    } else {
+      if (typeof vNodeOld.children[i] === "string") {
+        // new: node, old: string
+        el.textContent = ""
+        mount(vNodeNew.children[i] as MyNode, el)
+      } else {
+        // new: node, old: node
+        patch(vNodeOld.children[i] as MyNode, vNodeNew.children[i] as MyNode)
+      }
+    }
+  }
+
+  if (vNodeNew.children.length > vNodeOld.children.length) {
+    for (let i = commonLength; i < vNodeNew.children.length; i++) {
+      if (typeof vNodeNew.children[i] === "string") {
+        el.textContent = vNodeNew.children[i] as string
+      } else {
+        mount(vNodeNew.children[i] as MyNode, el)
+      }
+    }
+  } else {
+    for (let i = commonLength; i < vNodeOld.children.length; i++) {
+      el.removeChild((vNodeOld.children[i] as MyNode).el!)
+    }
   }
 }
 
@@ -66,27 +106,9 @@ function replaceNode(vNodeOld: MyNode, vNodeNew: MyNode) {
   el.parentNode?.removeChild(el)
 }
 
-function patchProps(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
-  const oldProps = vNodeOld.props
-  const newProps = vNodeNew.props
-
-  for (const key in newProps) {
-    const value = newProps[key]
-    if (value !== oldProps[key]) {
-      el?.setAttribute(key, value)
-    }
-  }
-
-  for (const key in oldProps) {
-    if (!(key in newProps)) {
-      el?.removeAttribute(key)
-    }
-  }
-}
-
-function mount(vdom: MyNode, container: HTMLElement) {
-  if (vdom.tagName === "root") {
-    vdom.children.forEach((node) => {
+function mount(vNode: MyNode, container: HTMLElement) {
+  if (vNode.tagName === "root") {
+    vNode.children.forEach((node) => {
       if (typeof node === "string") {
         container.textContent += node
       } else {
@@ -96,15 +118,15 @@ function mount(vdom: MyNode, container: HTMLElement) {
     return
   }
 
-  const el = (vdom.el = document.createElement(vdom.tagName))
+  const el = (vNode.el = document.createElement(vNode.tagName))
 
   // props
-  Object.entries(vdom.props).forEach(([key, value]) => {
+  Object.entries(vNode.props).forEach(([key, value]) => {
     el.setAttribute(key, value)
   })
 
   // children
-  vdom.children.forEach((child) => {
+  vNode.children.forEach((child) => {
     if (typeof child === "string") {
       el.textContent += child
     } else {
