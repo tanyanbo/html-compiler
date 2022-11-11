@@ -1,6 +1,6 @@
 import { MyNode } from "../common/my-node"
 import { compileHtml } from "../compiler"
-import { Ref, watchEffect } from "../reactivity"
+import { watchEffect } from "../reactivity"
 
 export function mountApp(
   component: Record<string, any>,
