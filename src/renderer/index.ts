@@ -1,10 +1,32 @@
 import { MyNode } from "../common/my-node"
+import { compileHtml } from "../compiler"
+import { Ref, watchEffect } from "../reactivity"
+
+export function mountApp(
+  component: Record<string, any>,
+  container: HTMLElement
+) {
+  let isMounted = false
+  let vdom: MyNode
+  watchEffect(() => {
+    console.log("watchEffect function running")
+    if (!isMounted) {
+      vdom = compileHtml(component.html)
+      mount(vdom, container)
+      container["_vdom"] = vdom
+      isMounted = true
+    } else {
+      patch(container["_vdom"], vdom)
+      container["_vdom"] = vdom
+    }
+  })
+}
 
 export function render(vdom: MyNode, container: HTMLElement) {
   mount(vdom, container)
 }
 
-export function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
+function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
   if (vNodeOld.tagName === vNodeNew.tagName) {
     // patch
     const el = (vNodeNew.el = vNodeOld.el!)
@@ -38,6 +60,7 @@ function patchProps(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
   }
 }
 
+// TODO: need to consider the case where there are multiple child text nodes
 function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
   const commonLength = Math.min(
     vNodeNew.children.length,

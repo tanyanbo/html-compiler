@@ -138,8 +138,14 @@ export function compileHtml(html: string): MyNode {
             continue
           }
           currentState = State.OPEN_TAG
-          curText.trim() &&
-            stack[stack.length - 1].children.push(curText.trim())
+          const text = curText.trim()
+          if (text.startsWith("{{") && text.endsWith("}}")) {
+            stack[stack.length - 1].children.push(
+              eval(text.slice(2, text.length - 2)).toString()
+            )
+          } else {
+            text && stack[stack.length - 1].children.push(text)
+          }
           curText = ""
         } else {
           curText += html[i]

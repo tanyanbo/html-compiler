@@ -2,7 +2,7 @@ let activeEffect: Function | null
 
 export class Ref<T> {
   #value: T
-  subscribers: Function[] = []
+  subscribers: Set<Function> = new Set()
 
   constructor(value: T) {
     this.#value = value
@@ -20,7 +20,7 @@ export class Ref<T> {
 
   #depend() {
     if (activeEffect) {
-      this.subscribers.push(activeEffect!)
+      this.subscribers.add(activeEffect!)
     }
   }
 
