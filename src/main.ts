@@ -17,6 +17,8 @@ window["App"] = {
   <div id="parent-container">
     <p id='first' style="color: blue" onclick="window.App.methods.increment()">{{window.App.data.count.value}}</p>
     <p class="second" style="color: red" onclick="window.App.methods.decrement()">{{window.App.data.count.value}}</p>
+    <button onclick="window.App.methods.increment()" style="margin-right: 10px">+1</button>
+    <button onclick="window.App.methods.decrement()">-1</button>
   </div>
 `,
 }
