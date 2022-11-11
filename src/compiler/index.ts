@@ -25,7 +25,10 @@ const VOID_TAGS = new Set([
   "wbr",
 ])
 
-export function compileHtml(html: string): MyNode {
+export function compileHtml(
+  html: string,
+  component: Record<string, any>
+): MyNode {
   let currentState: State = State.START
   let stack: MyNode[] = []
   let res: MyNode = new MyNode("root")
@@ -141,7 +144,9 @@ export function compileHtml(html: string): MyNode {
           const text = curText.trim()
           if (text.startsWith("{{") && text.endsWith("}}")) {
             stack[stack.length - 1].children.push(
-              eval(text.slice(2, text.length - 2)).toString()
+              Function(`return (${text.slice(2, text.length - 2)})`)
+                .call(component)
+                .toString()
             )
           } else {
             text && stack[stack.length - 1].children.push(text)
@@ -159,7 +164,9 @@ export function compileHtml(html: string): MyNode {
             if (html[idx] === quote && html[idx - 1] !== "\\") {
               if (curText.trim().startsWith(":")) {
                 // dynamic attribute value
-                curProps[curText.trim().slice(1)] = eval(html.slice(i + 2, idx))
+                curProps[curText.trim().slice(1)] = Function(
+                  `return (${html.slice(i + 2, idx)})`
+                ).call(component)
               } else {
                 // normal attribute value
                 curProps[curText.trim()] = html.slice(i + 2, idx)

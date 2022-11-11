@@ -10,23 +10,23 @@ export function mountApp(
   let vdom: MyNode
   watchEffect(() => {
     if (!isMounted) {
-      vdom = compileHtml(component.template)
-      mount(vdom, container)
+      vdom = compileHtml(component.template, component)
+      mount(vdom, container, component)
       container["_vdom"] = vdom
       isMounted = true
     } else {
-      const newVdom = compileHtml(component.template)
-      patch(container["_vdom"], newVdom)
+      const newVdom = compileHtml(component.template, component)
+      patch(container["_vdom"], newVdom, component)
       container["_vdom"] = newVdom
     }
   })
 }
 
-export function render(vdom: MyNode, container: HTMLElement) {
-  mount(vdom, container)
-}
-
-function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
+function patch(
+  vNodeOld: MyNode,
+  vNodeNew: MyNode,
+  component: Record<string, any>
+) {
   if (vNodeOld.tagName === vNodeNew.tagName) {
     // patch
     const el = (vNodeNew.el = vNodeOld.el!)
@@ -35,10 +35,10 @@ function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
     patchProps(vNodeOld, vNodeNew, el)
 
     // patch children
-    patchChildren(vNodeOld, vNodeNew, el)
+    patchChildren(vNodeOld, vNodeNew, el, component)
   } else {
     // replace
-    replaceNode(vNodeOld, vNodeNew)
+    replaceNode(vNodeOld, vNodeNew, component)
   }
 }
 
@@ -61,7 +61,12 @@ function patchProps(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
 }
 
 // TODO: need to consider the case where there are multiple child text nodes
-function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
+function patchChildren(
+  vNodeOld: MyNode,
+  vNodeNew: MyNode,
+  el: HTMLElement,
+  component: Record<string, any>
+) {
   const commonLength = Math.min(
     vNodeNew.children.length,
     vNodeOld.children.length
@@ -81,10 +86,14 @@ function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
       if (typeof vNodeOld.children[i] === "string") {
         // new: node, old: string
         el.textContent = ""
-        mount(vNodeNew.children[i] as MyNode, el)
+        mount(vNodeNew.children[i] as MyNode, el, component)
       } else {
         // new: node, old: node
-        patch(vNodeOld.children[i] as MyNode, vNodeNew.children[i] as MyNode)
+        patch(
+          vNodeOld.children[i] as MyNode,
+          vNodeNew.children[i] as MyNode,
+          component
+        )
       }
     }
   }
@@ -94,7 +103,7 @@ function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
       if (typeof vNodeNew.children[i] === "string") {
         el.textContent = vNodeNew.children[i] as string
       } else {
-        mount(vNodeNew.children[i] as MyNode, el)
+        mount(vNodeNew.children[i] as MyNode, el, component)
       }
     }
   } else {
@@ -104,12 +113,16 @@ function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
   }
 }
 
-function mountPropsAndChildren(vNode: MyNode, el: HTMLElement) {
+function mountPropsAndChildren(
+  vNode: MyNode,
+  el: HTMLElement,
+  component: Record<string, any>
+) {
   // props
   Object.entries(vNode.props).forEach(([key, value]) => {
     if (key.startsWith("@")) {
-      const fn = eval(value)
-      el.addEventListener(key.slice(1), fn)
+      const fn = Function(`return (${value})`).call(component)
+      el.addEventListener(key.slice(1), fn.bind(component))
     } else {
       el.setAttribute(key, value)
     }
@@ -120,18 +133,22 @@ function mountPropsAndChildren(vNode: MyNode, el: HTMLElement) {
     if (typeof child === "string") {
       el.textContent += child
     } else {
-      mount(child, el)
+      mount(child, el, component)
     }
   })
 }
 
-function replaceNode(vNodeOld: MyNode, vNodeNew: MyNode) {
+function replaceNode(
+  vNodeOld: MyNode,
+  vNodeNew: MyNode,
+  component: Record<string, any>
+) {
   const el = vNodeOld.el!
 
   // create new node
   const newEl = (vNodeNew.el = document.createElement(vNodeNew.tagName))
 
-  mountPropsAndChildren(vNodeNew, newEl)
+  mountPropsAndChildren(vNodeNew, newEl, component)
 
   el.parentNode?.insertBefore(newEl, el)
 
@@ -139,13 +156,17 @@ function replaceNode(vNodeOld: MyNode, vNodeNew: MyNode) {
   el.parentNode?.removeChild(el)
 }
 
-function mount(vNode: MyNode, container: HTMLElement) {
+function mount(
+  vNode: MyNode,
+  container: HTMLElement,
+  component: Record<string, any>
+) {
   if (vNode.tagName === "root") {
     vNode.children.forEach((node) => {
       if (typeof node === "string") {
         container.textContent += node
       } else {
-        mount(node, container)
+        mount(node, container, component)
       }
     })
     return
@@ -153,7 +174,7 @@ function mount(vNode: MyNode, container: HTMLElement) {
 
   const el = (vNode.el = document.createElement(vNode.tagName))
 
-  mountPropsAndChildren(vNode, el)
+  mountPropsAndChildren(vNode, el, component)
 
   container.appendChild(el)
 }
