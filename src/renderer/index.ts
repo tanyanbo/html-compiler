@@ -1,21 +1,48 @@
 import { MyNode } from "../common/my-node"
 
 export function render(vdom: MyNode, container: HTMLElement) {
-  patch(null, vdom, container)
+  mount(vdom, container)
 }
 
-export function patch(
-  vdomOld: MyNode | null,
-  vdomNew: MyNode,
-  container: HTMLElement
-) {
-  if (!vdomOld) {
-    mount(vdomNew, container)
-    return
+export function patch(vNodeOld: MyNode, vNodeNew: MyNode) {
+  if (vNodeOld.tagName === vNodeNew.tagName) {
+    // patch
+    const commonLength = Math.min(
+      vNodeNew.children.length,
+      vNodeOld.children.length
+    )
+
+    for (let i = 0; i < commonLength; i++) {
+      patch(vNodeOld.children[i] as MyNode, vNodeNew.children[i] as MyNode)
+    }
+  } else {
+    // replace
+    const el = vNodeOld.el!
+
+    // create new node
+    const newEl = (vNodeNew.el = document.createElement(vNodeNew.tagName))
+
+    // props
+    Object.entries(vNodeNew.props).forEach(([key, value]) => {
+      newEl.setAttribute(key, value)
+    })
+
+    // children
+    vNodeNew.children.forEach((child) => {
+      if (typeof child === "string") {
+        newEl.textContent += child
+      } else {
+        mount(child, newEl)
+      }
+    })
+    el.parentNode?.insertBefore(newEl, el)
+
+    // delete old node
+    el.parentNode?.removeChild(el)
   }
-
-  // patch
 }
+
+function patchProps(vdomOld: MyNode, vdomNew: MyNode) {}
 
 function mount(vdom: MyNode, container: HTMLElement) {
   if (vdom.tagName === "root") {
@@ -41,7 +68,7 @@ function mount(vdom: MyNode, container: HTMLElement) {
     if (typeof child === "string") {
       el.textContent += child
     } else {
-      mount(child, container)
+      mount(child, el)
     }
   })
 
