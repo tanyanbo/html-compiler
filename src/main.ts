@@ -8,7 +8,6 @@ const App = {
   },
   methods: {
     increment() {
-      console.log(this)
       this.data.count.value++
     },
     decrement() {
