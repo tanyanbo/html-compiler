@@ -153,16 +153,24 @@ export function compileHtml(html: string): MyNode {
         break
       case State.PROPS:
         if (html[i] === "=") {
+          // curText.trim() contains the name of the attribute
           const quote = html[i + 1]
           for (let idx = i + 2; idx < len; idx++) {
             if (html[idx] === quote && html[idx - 1] !== "\\") {
-              curProps[curText.trim()] = html.slice(i + 2, idx)
+              if (curText.trim().startsWith(":")) {
+                // dynamic attribute value
+                curProps[curText.trim().slice(1)] = eval(html.slice(i + 2, idx))
+              } else {
+                // normal attribute value
+                curProps[curText.trim()] = html.slice(i + 2, idx)
+              }
               i = idx
               curText = ""
               break
             }
           }
         } else if (html[i] === " ") {
+          // boolean attribute
           if (curText.trim()) {
             curProps[curText.trim()] = "true"
             curText = ""
@@ -189,6 +197,7 @@ export function compileHtml(html: string): MyNode {
             continue
           }
           if (curText !== "" && curText !== "/") {
+            // boolean attribute
             curProps[curText] = "true"
             curText = ""
           }

@@ -104,25 +104,35 @@ function patchChildren(vNodeOld: MyNode, vNodeNew: MyNode, el: HTMLElement) {
   }
 }
 
+function mountPropsAndChildren(vNode: MyNode, el: HTMLElement) {
+  // props
+  Object.entries(vNode.props).forEach(([key, value]) => {
+    if (key.startsWith("@")) {
+      const fn = eval(value)
+      el.addEventListener(key.slice(1), fn)
+    } else {
+      el.setAttribute(key, value)
+    }
+  })
+
+  // children
+  vNode.children.forEach((child) => {
+    if (typeof child === "string") {
+      el.textContent += child
+    } else {
+      mount(child, el)
+    }
+  })
+}
+
 function replaceNode(vNodeOld: MyNode, vNodeNew: MyNode) {
   const el = vNodeOld.el!
 
   // create new node
   const newEl = (vNodeNew.el = document.createElement(vNodeNew.tagName))
 
-  // props
-  Object.entries(vNodeNew.props).forEach(([key, value]) => {
-    newEl.setAttribute(key, value)
-  })
+  mountPropsAndChildren(vNodeNew, newEl)
 
-  // children
-  vNodeNew.children.forEach((child) => {
-    if (typeof child === "string") {
-      newEl.textContent += child
-    } else {
-      mount(child, newEl)
-    }
-  })
   el.parentNode?.insertBefore(newEl, el)
 
   // delete old node
@@ -143,19 +153,7 @@ function mount(vNode: MyNode, container: HTMLElement) {
 
   const el = (vNode.el = document.createElement(vNode.tagName))
 
-  // props
-  Object.entries(vNode.props).forEach(([key, value]) => {
-    el.setAttribute(key, value)
-  })
-
-  // children
-  vNode.children.forEach((child) => {
-    if (typeof child === "string") {
-      el.textContent += child
-    } else {
-      mount(child, el)
-    }
-  })
+  mountPropsAndChildren(vNode, el)
 
   container.appendChild(el)
 }
