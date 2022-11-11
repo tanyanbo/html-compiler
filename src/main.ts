@@ -18,7 +18,7 @@ window["App"] = {
         window["App"].data.id.value === "parent" ? "child" : "parent"
     },
   },
-  html: `
+  template: `
   <div :id="window.App.data.id.value">
     <p id='first' style="color: blue">{{window.App.data.count.value}}</p>
     <p class="second" style="color: red">{{window.App.data.count.value}}</p>
