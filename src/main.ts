@@ -13,7 +13,10 @@ const vdom = compileHtml(html)
 render(vdom, document.getElementById("app")!)
 
 const secondHtml = `
-  <header style="color: green">TESTING</header>
+  <div>
+    <p id='first' >5</p>
+    <p class="second" >2</p>
+  </div>
 `
 const vdom2 = compileHtml(secondHtml)
 
