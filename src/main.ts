@@ -7,7 +7,6 @@ window["App"] = {
   },
   methods: {
     increment() {
-      console.log("running")
       window["App"].data.count.value++
       console.log(window["App"].data.count.value)
     },

@@ -9,15 +9,15 @@ export function mountApp(
   let isMounted = false
   let vdom: MyNode
   watchEffect(() => {
-    console.log("watchEffect function running")
     if (!isMounted) {
       vdom = compileHtml(component.html)
       mount(vdom, container)
       container["_vdom"] = vdom
       isMounted = true
     } else {
-      patch(container["_vdom"], vdom)
-      container["_vdom"] = vdom
+      const newVdom = compileHtml(component.html)
+      patch(container["_vdom"], newVdom)
+      container["_vdom"] = newVdom
     }
   })
 }
